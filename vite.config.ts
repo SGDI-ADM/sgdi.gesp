@@ -22,10 +22,15 @@ export default defineConfig({
         ]
       : []),
   ],
-  root: path.resolve(__dirname, './client'),
+  root: './client',
   build: {
-    outDir: path.resolve(__dirname, '../dist'),
-    emptyOutDir: true
+    outDir: path.resolve(__dirname, 'dist'),
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'client/index.html')
+      }
+    }
   },
   resolve: {
     alias: {
