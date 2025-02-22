@@ -13,12 +13,18 @@ module.exports = {
       },
     },
     extend: {
+      backgroundColor: {
+        DEFAULT: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+      },
+      textColor: {
+        DEFAULT: "hsl(var(--foreground))",
+        foreground: "hsl(var(--background))",
+      },
       borderColor: {
-        DEFAULT: "hsl(var(--border))"
+        DEFAULT: "hsl(var(--border))",
       },
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
