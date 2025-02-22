@@ -1,11 +1,11 @@
 {
-  "name": "rest-express",
+  "name": "sgi-gesp",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "npm install && tsc && vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "check": "tsc",
     "db:push": "drizzle-kit push"

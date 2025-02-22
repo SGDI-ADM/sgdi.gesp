@@ -40,7 +40,6 @@ interface Property {
 
 export function PropertyGrid() {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceSort, setPriceSort] = useState<"asc" | "desc" | null>(null);
@@ -121,8 +120,6 @@ export function PropertyGrid() {
     } catch (err) {
       console.error('Fetch Error:', err);
       setProperties(sampleProperties);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -278,174 +275,168 @@ export function PropertyGrid() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {sortedProperties.map((property, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-              >
-                <Card className="bg-white border-gray-200 hover:shadow-lg transition-shadow">
-                  <CardHeader className="relative">
-                    <CardTitle className="text-gray-900">
-                      {property.Producto} - {property["Ubicación (referencia)"]}
-                    </CardTitle>
-                    <Dialog>
-                      <DialogTrigger asChild>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <AnimatePresence>
+          {sortedProperties.map((property, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2, delay: index * 0.05 }}
+            >
+              <Card className="bg-white border-gray-200 hover:shadow-lg transition-shadow">
+                <CardHeader className="relative">
+                  <CardTitle className="text-gray-900">
+                    {property.Producto} - {property["Ubicación (referencia)"]}
+                  </CardTitle>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-4 top-4 text-gray-900 hover:bg-gray-100 opacity-100"
+                        onClick={() => setSelectedProperty(property)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-white text-gray-900 border-gray-200 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-2xl w-[90vw] max-h-[85vh] overflow-y-auto">
+                      <DialogHeader className="text-center relative">
+                        <DialogTitle className="text-xl">{property.Producto}</DialogTitle>
+                        {property["Ficha Tecnica"] && (
+                          <a
+                            href={property["Ficha Tecnica"]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute right-0 top-0 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            FICHA TÉCNICA
+                          </a>
+                        )}
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="text-3xl font-bold text-gray-900">
+                          {formatPrice(property["PRECIO TOTAL"])}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          {Object.entries(property).map(([key, value]) => {
+                            // Skip empty values or null
+                            if (!value && value !== 0) return null;
+                            
+                            // Skip the fields we already show elsewhere
+                            if (key === "Producto") return null;
+                            if (key === "PRECIO TOTAL") return null;
+
+                            // Skip Ficha Tecnica as it's shown in the header
+                            if (key === "Ficha Tecnica") {
+                              return null;
+                            }
+
+                            // Format the display value based on the type
+                            let displayValue = value;
+                            if (typeof value === 'number') {
+                              if (key.toLowerCase().includes('precio')) {
+                                displayValue = formatPrice(value);
+                              } else if (key.toLowerCase().includes('metros')) {
+                                displayValue = `${value}m²`;
+                              }
+                            }
+
+                            // Format the label
+                            const label = key
+                              .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+                              .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+
+                            return (
+                              <div key={key} className="space-y-1">
+                                <span className="text-gray-500">{label}:</span>
+                                <div className={`
+                                  ${key === "ESTATUS"
+                                    ? value.toLowerCase() === "disponible"
+                                      ? "text-green-600"
+                                      : value.toLowerCase() === "vendido"
+                                        ? "text-red-600"
+                                        : "text-yellow-600"
+                                    : "text-gray-900"
+                                  }`}>
+                                  {displayValue}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="mt-4 space-x-10 flex">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute right-4 top-4 text-gray-900 hover:bg-gray-100 opacity-100"
-                          onClick={() => setSelectedProperty(property)}
+                          className="text-gray-900 hover:bg-gray-100 opacity-100"
+                          onClick={() => updatePropertyStatus(property.Referencia, 'Disponible')}
                         >
-                          <Eye className="h-4 w-4" />
+                          Disponible
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-white text-gray-900 border-gray-200 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-2xl w-[90vw] max-h-[85vh] overflow-y-auto">
-                        <DialogHeader className="text-center relative">
-                          <DialogTitle className="text-xl">{property.Producto}</DialogTitle>
-                          {property["Ficha Tecnica"] && (
-                            <a
-                              href={property["Ficha Tecnica"]}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="absolute right-0 top-0 px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                              FICHA TÉCNICA
-                            </a>
-                          )}
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="text-3xl font-bold text-gray-900">
-                            {formatPrice(property["PRECIO TOTAL"])}
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            {Object.entries(property).map(([key, value]) => {
-                              // Skip empty values or null
-                              if (!value && value !== 0) return null;
-                              
-                              // Skip the fields we already show elsewhere
-                              if (key === "Producto") return null;
-                              if (key === "PRECIO TOTAL") return null;
-
-                              // Skip Ficha Tecnica as it's shown in the header
-                              if (key === "Ficha Tecnica") {
-                                return null;
-                              }
-
-                              // Format the display value based on the type
-                              let displayValue = value;
-                              if (typeof value === 'number') {
-                                if (key.toLowerCase().includes('precio')) {
-                                  displayValue = formatPrice(value);
-                                } else if (key.toLowerCase().includes('metros')) {
-                                  displayValue = `${value}m²`;
-                                }
-                              }
-
-                              // Format the label
-                              const label = key
-                                .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-                                .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
-
-                              return (
-                                <div key={key} className="space-y-1">
-                                  <span className="text-gray-500">{label}:</span>
-                                  <div className={`
-                                    ${key === "ESTATUS"
-                                      ? value.toLowerCase() === "disponible"
-                                        ? "text-green-600"
-                                        : value.toLowerCase() === "vendido"
-                                          ? "text-red-600"
-                                          : "text-yellow-600"
-                                      : "text-gray-900"
-                                    }`}>
-                                    {displayValue}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="mt-4 space-x-10 flex">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-900 hover:bg-gray-100 opacity-100"
-                            onClick={() => updatePropertyStatus(property.Referencia, 'Disponible')}
-                          >
-                            Disponible
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-900 hover:bg-gray-100 opacity-100"
-                            onClick={() => updatePropertyStatus(property.Referencia, 'Reservado')}
-                          >
-                            Reservado
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-900 hover:bg-gray-100 opacity-100"
-                            onClick={() => updatePropertyStatus(property.Referencia, 'Vendido')}
-                          >
-                            Vendido
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {formatPrice(property["PRECIO TOTAL"])}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-gray-900 hover:bg-gray-100 opacity-100"
+                          onClick={() => updatePropertyStatus(property.Referencia, 'Reservado')}
+                        >
+                          Reservado
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-gray-900 hover:bg-gray-100 opacity-100"
+                          onClick={() => updatePropertyStatus(property.Referencia, 'Vendido')}
+                        >
+                          Vendido
+                        </Button>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="text-gray-500">Area:</span>{" "}
-                          {property.Metros2}m²
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Bedrooms:</span>{" "}
-                          {property["N° de recámaras"]}
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Bathrooms:</span>{" "}
-                          {property["N° de Baños"]}
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Status:</span>{" "}
-                          <span className={`
-                            ${property.ESTATUS.toLowerCase() === "disponible"
-                              ? "text-green-600"
-                              : property.ESTATUS.toLowerCase() === "vendido"
-                                ? "text-red-600"
-                                : "text-yellow-600"
-                            }`}>
-                            {property.ESTATUS}
-                          </span>
-                        </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-gray-900">
+                      {formatPrice(property["PRECIO TOTAL"])}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-gray-500">Area:</span>{" "}
+                        {property.Metros2}m²
                       </div>
-                      <div className="text-sm text-gray-500 mt-2 truncate">
-                        {property["Dirección Completa"]}
+                      <div>
+                        <span className="text-gray-500">Bedrooms:</span>{" "}
+                        {property["N° de recámaras"]}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Bathrooms:</span>{" "}
+                        {property["N° de Baños"]}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Status:</span>{" "}
+                        <span className={`
+                          ${property.ESTATUS.toLowerCase() === "disponible"
+                            ? "text-green-600"
+                            : property.ESTATUS.toLowerCase() === "vendido"
+                              ? "text-red-600"
+                              : "text-yellow-600"
+                          }`}>
+                          {property.ESTATUS}
+                        </span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+                    <div className="text-sm text-gray-500 mt-2 truncate">
+                      {property["Dirección Completa"]}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
